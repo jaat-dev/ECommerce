@@ -51,15 +51,22 @@ namespace Ecommerce.Order.Service.EventHandlers
 
                 // 04. Update Stocks
                 _logger.LogInformation("--- Updating stock");
-                await _catalogProxy.UpdateStockAsync(new ProductInStockUpdateStockCommand
+                try
                 {
-                    Items = notification.Items.Select(x => new ProductInStockUpdateItem
+                    await _catalogProxy.UpdateStockAsync(new ProductInStockUpdateStockCommand
                     {
-                        ProductId = x.ProductId,
-                        Stock = x.Quantity,
-                        Action = ProductInStockAction.Substract
-                    })
-                });
+                        Items = notification.Items.Select(x => new ProductInStockUpdateItem
+                        {
+                            ProductId = x.ProductId,
+                            Stock = x.Quantity,
+                            Action = ProductInStockAction.Substract
+                        })
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("No se pudo crear la orden por falta de stock, error: {msg}", ex.Message);
+                }
 
                 await trx.CommitAsync(cancellationToken);
             }

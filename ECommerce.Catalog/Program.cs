@@ -3,9 +3,12 @@ using ECommerce.Catalog.Services.Queries;
 using ECommerce.Common;
 using HealthChecks.UI.Client;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.Reflection;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,19 +22,43 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         x => x.MigrationsHistoryTable("__EFMigrationsHistory", "Catalog"));
 });
 
-// Query services
-builder.Services.AddTransient<IProductQueryService, ProductQueryService>();
-builder.Services.AddTransient<IProductInStockQueryService, ProductInStockQueryService>();
+// Health check
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+builder.Services.AddHealthChecksUI().AddInMemoryStorage();
 
 // Event handlers
 builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
-// Health check
-builder.Services.AddHealthChecks()
-    .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-builder.Services.AddHealthChecksUI().AddInMemoryStorage();
+// Query services
+builder.Services.AddTransient<IProductQueryService, ProductQueryService>();
+builder.Services.AddTransient<IProductInStockQueryService, ProductInStockQueryService>();
+
 
 builder.Services.AddControllers();
+
+// Add Authentication
+var secretKey = Encoding.ASCII.GetBytes(
+    builder.Configuration.GetValue<string>("SecretKey")
+);
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(secretKey),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline. -------------------------------------------------
 
 // Configure the PaperTrail
 ILoggerFactory loggerFactory = new LoggerFactory();
@@ -39,10 +66,6 @@ loggerFactory.AddSyslog(
     builder.Configuration.GetValue<string>("Papertrail:host"),
     builder.Configuration.GetValue<int>("Papertrail:port"));
 
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline. -------------------------------------------------
 app.UseAuthorization();
 app.MapControllers();
 
@@ -53,15 +76,3 @@ app.MapHealthChecks("/hc", new HealthCheckOptions()
 });
 app.MapHealthChecksUI(config => config.UIPath = "/hc-ui");
 app.Run();
-
-
-//--------------------------------------------------------------------------------
-//builder.Services.AddHealthChecks()
-//    .AddCheck("self", () => HealthCheckResult.Healthy())
-//    .AddDbContextCheck<ApplicationDbContext>(typeof(ApplicationDbContext).Name);
-
-//app.MapHealthChecks("/hc", new HealthCheckOptions()
-//{
-//    Predicate = _ => true,
-//    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-//});

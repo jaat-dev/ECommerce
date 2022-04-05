@@ -3,25 +3,24 @@ using ECommerce.Catalog.Services.Queries;
 using ECommerce.Catalog.Services.Queries.DTOs;
 using ECommerce.Common;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ECommerce.Catalog.Controllers
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("v1/products")]
     public class ProductController : ControllerBase
     {
         private readonly IProductQueryService _productQueryService;
-        //private readonly ILogger<ProductController> _logger;
         private readonly IMediator _mediator;
 
         public ProductController(
-            //ILogger<ProductController> logger,
             IMediator mediator,
             IProductQueryService productQueryService)
         {
-            //_logger = logger;
             _mediator = mediator;
             _productQueryService = productQueryService;
         }

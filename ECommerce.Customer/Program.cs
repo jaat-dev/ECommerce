@@ -1,5 +1,4 @@
 using Ecommerce.Customer.Persistence;
-using ECommerce.Customer.Services.Queries;
 using HealthChecks.UI.Client;
 using MediatR;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -24,13 +23,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Event handlers
 builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 
-
 // Health check
 builder.Services.AddHealthChecks()
     .AddSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
 builder.Services.AddHealthChecksUI()
-    .AddSqliteStorage($"Data Source=Healthchecks\\db"); ;
+    .AddSqliteStorage($"Data Source=Healthchecks\\db");
 
 // API Controllers
 builder.Services.AddControllers();

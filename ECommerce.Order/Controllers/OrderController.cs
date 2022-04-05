@@ -3,11 +3,13 @@ using Ecommerce.Order.Services.Queries;
 using Ecommerce.Order.Services.Queries.DTOs;
 using ECommerce.Common;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ecommerce.Order.Controllers
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("v1/orders")]
     public class OrderController : ControllerBase

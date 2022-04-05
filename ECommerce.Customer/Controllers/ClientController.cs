@@ -3,11 +3,14 @@ using ECommerce.Common;
 using ECommerce.Customer.Services.Queries;
 using ECommerce.Customer.Services.Queries.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ECommerce.Customer.Controllers
 {
-    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [ApiController]
     [Route("v1/clients")]
     public class ClientController : ControllerBase
@@ -29,6 +32,10 @@ namespace ECommerce.Customer.Controllers
             int take = 10,
             string? ids = null)
         {
+            // Obtener inforacion de un Claims
+            var id = User.Claims
+                .SingleOrDefault(x => x.Type.Equals(ClaimTypes.NameIdentifier))
+                .Value;
             IEnumerable<int>? clients = null;
 
             if (!string.IsNullOrEmpty(ids))
